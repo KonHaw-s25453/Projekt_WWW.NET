@@ -1,0 +1,21 @@
+@model (int PlayerId, ICollection<GameLibrary.Models.Friend> Friends)
+
+<h3>👥 Znajomi</h3>
+
+@if (Model.Friends.Any())
+{
+    <ul class="list-group">
+        @foreach (var f in Model.Friends)
+        {
+            <li class="list-group-item">
+                <a asp-controller="Player" asp-action="Details" asp-route-id="@f.FriendId">
+                    @f.FriendPlayer.Nick
+                </a>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p class="text-muted">Brak znajomych.</p>
+}

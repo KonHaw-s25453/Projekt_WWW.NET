@@ -1,0 +1,55 @@
+@model GameLibrary.Models.Game
+
+@{
+    ViewData["Title"] = "Szczegóły gry";
+}
+
+<h1>@Model.Title</h1>
+<p class="text-muted">Rok wydania: @Model.ReleaseYear</p>
+
+<hr />
+
+<h3>🏷 Tagi</h3>
+@if (Model.GameTags.Any())
+{
+    @foreach (var gt in Model.GameTags)
+    {
+        <a asp-controller="Tag" asp-action="Details" asp-route-id="@gt.Tag.Id"
+           class="badge bg-primary text-decoration-none me-1">@gt.Tag.Name</a>
+    }
+}
+else
+{
+    <p>Brak tagów.</p>
+}
+
+<hr />
+
+<h3>👤 Gracze</h3>
+@if (Model.PlayerGames.Any())
+{
+    <table class="table table-sm">
+        <thead>
+            <tr><th>Gracz</th><th>Godziny</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var pg in Model.PlayerGames)
+            {
+                <tr>
+                    <td>
+                        <a asp-controller="Player" asp-action="Details" asp-route-id="@pg.Player.Id">
+                            @pg.Player.Nick
+                        </a>
+                    </td>
+                    <td>@pg.HoursPlayed h</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Nikt jeszcze nie gra.</p>
+}
+
+<a asp-action="Index" class="btn btn-secondary mt-3">← Wróć</a>

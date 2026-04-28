@@ -1,0 +1,26 @@
+@model GameLibrary.Models.Player
+
+@{
+    ViewData["Title"] = "Nowy gracz";
+}
+
+<h1>Nowy gracz</h1>
+
+<form asp-action="Create">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Nick" class="form-label">Nick</label>
+        <input asp-for="Nick" class="form-control" />
+        <span asp-validation-for="Nick" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label">Email</label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Zapisz</button>
+    <a asp-action="Index" class="btn btn-secondary">Anuluj</a>
+</form>

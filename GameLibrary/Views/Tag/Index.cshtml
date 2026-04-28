@@ -1,0 +1,33 @@
+@model IEnumerable<GameLibrary.Models.Tag>
+
+@{
+    ViewData["Title"] = "Tagi";
+}
+
+<h1>Tagi (Kategorie)</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">+ Nowy tag</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nazwa</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tag in Model)
+        {
+            <tr>
+                <td>@tag.Name</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@tag.Id" class="btn btn-sm btn-info">Szczegóły</a>
+                    <a asp-action="Edit" asp-route-id="@tag.Id" class="btn btn-sm btn-warning">Edytuj</a>
+                    <a asp-action="Delete" asp-route-id="@tag.Id" class="btn btn-sm btn-danger">Usuń</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

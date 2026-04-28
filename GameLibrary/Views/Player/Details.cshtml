@@ -1,0 +1,45 @@
+@model GameLibrary.Models.Player
+
+@{
+    ViewData["Title"] = "Profil gracza";
+}
+
+<h1>@Model.Nick</h1>
+<p class="text-muted">@Model.Email</p>
+
+<hr />
+
+<h3>🎮 Biblioteka gier</h3>
+@if (Model.PlayerGames.Any())
+{
+    <table class="table table-sm">
+        <thead>
+            <tr><th>Gra</th><th>Rok</th><th>Godziny</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var pg in Model.PlayerGames)
+            {
+                <tr>
+                    <td>
+                        <a asp-controller="Game" asp-action="Details" asp-route-id="@pg.Game.Id">
+                            @pg.Game.Title
+                        </a>
+                    </td>
+                    <td>@pg.Game.ReleaseYear</td>
+                    <td>@pg.HoursPlayed h</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Brak gier w bibliotece.</p>
+}
+
+<hr />
+
+@* ViewComponent wyświetlający listę znajomych *@
+<vc:friend-list player-id="@Model.Id" friends="@Model.Friends" />
+
+<a asp-action="Index" class="btn btn-secondary mt-3">← Wróć</a>
