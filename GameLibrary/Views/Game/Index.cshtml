@@ -1,0 +1,39 @@
+@model IEnumerable<GameLibrary.Models.Game>
+
+@{
+    ViewData["Title"] = "Gry";
+}
+
+<h1>Gry</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">+ Nowa gra</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Tytuł</th>
+            <th>Rok wydania</th>
+            <th>Tagi</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var game in Model)
+        {
+            <tr>
+                <td>@game.Title</td>
+                <td>@game.ReleaseYear</td>
+                <td>
+                    @string.Join(", ", game.GameTags.Select(gt => gt.Tag.Name))
+                </td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@game.Id" class="btn btn-sm btn-info">Szczegóły</a>
+                    <a asp-action="Edit" asp-route-id="@game.Id" class="btn btn-sm btn-warning">Edytuj</a>
+                    <a asp-action="Delete" asp-route-id="@game.Id" class="btn btn-sm btn-danger">Usuń</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

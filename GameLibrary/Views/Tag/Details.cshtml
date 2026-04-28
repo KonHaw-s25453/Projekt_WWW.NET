@@ -1,0 +1,30 @@
+@model GameLibrary.Models.Tag
+
+@{
+    ViewData["Title"] = "Szczegóły tagu";
+}
+
+<h1>Tag: @Model.Name</h1>
+
+<hr />
+
+<h3>🎮 Gry w tej kategorii</h3>
+@if (Model.GameTags.Any())
+{
+    <ul class="list-group">
+        @foreach (var gt in Model.GameTags)
+        {
+            <li class="list-group-item">
+                <a asp-controller="Game" asp-action="Details" asp-route-id="@gt.Game.Id">
+                    @gt.Game.Title (@gt.Game.ReleaseYear)
+                </a>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>Brak gier w tej kategorii.</p>
+}
+
+<a asp-action="Index" class="btn btn-secondary mt-3">← Wróć</a>
