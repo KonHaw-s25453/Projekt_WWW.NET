@@ -1,0 +1,131 @@
+================================================================================
+  AppDbContext.cs – OPIS LINIJKA PO LINIJCE
+================================================================================
+
+Plik: GameLibrary/Data/AppDbContext.cs
+
+AppDbContext to „brama" do bazy danych. Dziedziczy po DbContext (EF Core).
+Każda właściwość DbSet<T> = jedna tabela. Metoda OnModelCreating konfiguruje
+relacje i dane startowe (seed data).
+
+--------------------------------------------------------------------------------
+
+LINIA 1:  using GameLibrary.Models;
+          – import przestrzeni nazw z modelami (Player, Game, Tag itd.)
+
+LINIA 2:  using Microsoft.EntityFrameworkCore;
+          – import EF Core: DbContext, DbSet, ModelBuilder itd.
+
+LINIA 4:  namespace GameLibrary.Data;
+          – przestrzeń nazw dla klas związanych z bazą danych
+
+LINIA 6:  public class AppDbContext : DbContext
+          – AppDbContext dziedziczy po DbContext z EF Core
+          – DbContext zarządza połączeniem z bazą i sesją (Unit of Work)
+
+LINIA 8:  public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+          – konstruktor przyjmujący opcje konfiguracyjne (connection string, provider)
+          – „: base(options)" przekazuje opcje do klasy bazowej DbContext
+          – ASP.NET Core wstrzykuje ten konstruktor przez Dependency Injection
+
+LINIA 11: public DbSet<Player> Players { get; set; }
+          – DbSet<Player> mapuje na tabelę „Players" w bazie
+          – przez ten obiekt wykonujemy LINQ (np. _context.Players.ToListAsync())
+
+LINIA 12: public DbSet<Game> Games { get; set; }
+          – tabela „Games"
+
+LINIA 13: public DbSet<Tag> Tags { get; set; }
+          – tabela „Tags"
+
+LINIA 14: public DbSet<PlayerGame> PlayerGames { get; set; }
+          – tabela „PlayerGames" (tabela pośrednia Player ↔ Game)
+
+LINIA 15: public DbSet<GameTag> GameTags { get; set; }
+          – tabela „GameTags" (tabela pośrednia Game ↔ Tag)
+
+LINIA 16: public DbSet<Friend> Friends { get; set; }
+          – tabela „Friends" (tabela pośrednia Player ↔ Player)
+
+LINIA 18: protected override void OnModelCreating(ModelBuilder modelBuilder)
+          – metoda wywoływana przez EF Core przy budowaniu schematu bazy
+          – tutaj konfigurujemy relacje i klucze złożone przy użyciu Fluent API
+          – nadpisuje metodę z klasy bazowej (override)
+
+--- KONFIGURACJA PlayerGame ---
+
+LINIA 21: modelBuilder.Entity<PlayerGame>()
+          – wskazuje EF Core, że konfigurujemy encję PlayerGame
+
+LINIA 22:     .HasKey(pg => new { pg.PlayerId, pg.GameId });
+          – definiuje KLUCZ ZŁOŻONY (Composite Key) z dwóch kolumn
+          – „pg =>" to wyrażenie lambda; pg to instancja PlayerGame
+          – bez tej linii EF Core nie wiedziałby, co jest kluczem głównym
+            (brak kolumny „Id" w PlayerGame)
+
+LINIA 24-27: modelBuilder.Entity<PlayerGame>()
+                 .HasOne(pg => pg.Player)       – PlayerGame ma JEDNEGO gracza
+                 .WithMany(p => p.PlayerGames)  – gracz ma WIELE PlayerGame
+                 .HasForeignKey(pg => pg.PlayerId); – klucz obcy to PlayerId
+          – konfiguracja relacji 1:N po stronie Player
+
+LINIA 29-32: modelBuilder.Entity<PlayerGame>()
+                 .HasOne(pg => pg.Game)         – PlayerGame ma JEDNĄ grę
+                 .WithMany(g => g.PlayerGames)  – gra ma WIELE PlayerGame
+                 .HasForeignKey(pg => pg.GameId); – klucz obcy to GameId
+          – konfiguracja relacji 1:N po stronie Game
+
+--- KONFIGURACJA GameTag ---
+
+LINIA 35: modelBuilder.Entity<GameTag>()
+              .HasKey(gt => new { gt.GameId, gt.TagId });
+          – klucz złożony tabeli GameTag z kolumn GameId i TagId
+
+LINIA 37-40: HasOne / WithMany / HasForeignKey dla strony Game
+LINIA 42-45: HasOne / WithMany / HasForeignKey dla strony Tag
+          – analogicznie jak PlayerGame
+
+--- KONFIGURACJA Friend (SELF-REFERENCING) ---
+
+LINIA 48: modelBuilder.Entity<Friend>()
+              .HasKey(f => new { f.PlayerId, f.FriendId });
+          – klucz złożony z PlayerId i FriendId
+
+LINIA 50-56: modelBuilder.Entity<Friend>()
+                 .HasOne(f => f.Player)          – strona „właściciela"
+                 .WithMany(p => p.Friends)        – gracz może mieć wiele rekordów Friend
+                 .HasForeignKey(f => f.PlayerId)
+                 .OnDelete(DeleteBehavior.Restrict);
+          – OnDelete(Restrict) zapobiega kaskadowemu usunięciu przy usuwaniu gracza
+          – bez tego SQLite zgłosiłby błąd cyklu kaskadowego
+
+LINIA 58-62: modelBuilder.Entity<Friend>()
+                 .HasOne(f => f.FriendPlayer)    – strona „znajomego"
+                 .WithMany()                     – brak zwrotnej kolekcji w modelu
+                 .HasForeignKey(f => f.FriendId)
+                 .OnDelete(DeleteBehavior.Restrict);
+          – WithMany() bez parametru = EF Core nie wymaga kolekcji nawigacyjnej
+            po drugiej stronie relacji
+
+--- SEED DATA (DANE STARTOWE) ---
+
+LINIA 65-70: modelBuilder.Entity<Tag>().HasData(...)
+          – wstawia do tabeli Tags 4 rekordy przy pierwszej migracji:
+            RPG (Id=1), FPS (Id=2), Indie (Id=3), OpenWorld (Id=4)
+          – HasData wymaga jawnego podania Id (EF Core nie nadaje ich automatycznie)
+
+LINIA 72-75: modelBuilder.Entity<Player>().HasData(...)
+          – wstawia 2 graczy: Jan i Anna
+
+LINIA 77-81: modelBuilder.Entity<Game>().HasData(...)
+          – wstawia 3 gry: Wiedźmin 3, Minecraft, Cyberpunk 2077
+
+LINIA 83-87: modelBuilder.Entity<PlayerGame>().HasData(...)
+          – przypisuje graczom gry z liczbą godzin:
+            Jan → Wiedźmin 3 (120h), Jan → Minecraft (50h), Anna → Wiedźmin 3 (80h)
+
+LINIA 89-95: modelBuilder.Entity<GameTag>().HasData(...)
+          – przypisuje tagi do gier
+
+LINIA 97-99: modelBuilder.Entity<Friend>().HasData(...)
+          – dodaje relację znajomości: Jan (Id=1) zna Annę (Id=2)

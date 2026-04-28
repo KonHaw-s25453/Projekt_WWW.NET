@@ -1,0 +1,111 @@
+================================================================================
+  ViewComponent – OPIS LINIJKA PO LINIJCE
+================================================================================
+
+ViewComponent to „mini-kontroler" wielokrotnego użytku, który można osadzić
+w dowolnym widoku. Nie obsługuje żądań HTTP bezpośrednio (brak routingu),
+ale może odpytywać bazę danych i renderować własny widok Razor.
+
+================================================================================
+  PLIK: ViewComponents/FriendListViewComponent.cs
+================================================================================
+
+LINIA 1:  using GameLibrary.Models;
+          – import modelu Friend (potrzebny jako typ parametru)
+
+LINIA 2:  using Microsoft.AspNetCore.Mvc;
+          – import ViewComponent, IViewComponentResult
+
+LINIA 4:  namespace GameLibrary.ViewComponents;
+          – przestrzeń nazw dla ViewComponent
+
+LINIA 6:  // ViewComponent to mini-kontroler wielokrotnego użytku.
+LINIA 7:  // Można go osadzić w dowolnym widoku za pomocą: <vc:friend-list ... />
+          – komentarz dokumentujący sposób użycia
+
+LINIA 8:  public class FriendListViewComponent : ViewComponent
+          – klasa musi dziedziczyć po ViewComponent
+          – nazwa klasy bez sufiksu „ViewComponent" = „FriendList"
+          – Tag Helper: <vc:friend-list ...> (PascalCase → kebab-case)
+
+LINIA 10: // Metoda InvokeAsync jest wywoływana przy renderowaniu komponentu
+LINIA 11: public IViewComponentResult Invoke(int playerId, ICollection<Friend> friends)
+          – Invoke (lub InvokeAsync dla wersji async) = punkt wejścia ViewComponent
+          – parametry: playerId i friends przekazywane z widoku wywołującego
+          – IViewComponentResult = typ zwracany (analogia do IActionResult)
+
+LINIA 13: return View((playerId, friends));
+          – renderuje widok Default.cshtml ze ścieżki:
+              Views/Shared/Components/FriendList/Default.cshtml
+          – przekazuje krotkę (tuple) jako model widoku
+          – „View()" bez nazwy = domyślnie szuka „Default.cshtml"
+            (można podać inną nazwę: View("Alternative", model))
+
+================================================================================
+  UŻYCIE W WIDOKU: Views/Player/Details.cshtml
+================================================================================
+
+LINIA 42-43: <vc:friend-list player-id="@Model.Id" friends="@Model.Friends" />
+
+          – <vc:friend-list ...> – Tag Helper wywołujący ViewComponent
+            – „vc:" to specjalny prefix dla ViewComponent
+            – „friend-list" = FriendListViewComponent (bez sufiksu, kebab-case)
+
+          – player-id="@Model.Id"
+            – parametr player-id odpowiada parametrowi playerId metody Invoke()
+            – Razor konwertuje kebab-case na camelCase automatycznie
+
+          – friends="@Model.Friends"
+            – parametr friends odpowiada parametrowi friends metody Invoke()
+            – @Model.Friends = kolekcja Friend załadowana przez kontroler
+              (przez .Include(p => p.Friends).ThenInclude(f => f.FriendPlayer))
+
+================================================================================
+  WIDOK KOMPONENTU: Views/Shared/Components/FriendList/Default.cshtml
+================================================================================
+
+Ścieżka jest konwencjonalna:
+  Views/Shared/Components/{NazwaKomponentu}/Default.cshtml
+
+LINIA 1:  @model (int PlayerId, ICollection<GameLibrary.Models.Friend> Friends)
+          – model to krotka C# (ValueTuple) z dwoma polami
+          – PlayerId i Friends odpowiadają polom krotki zwróconej przez Invoke()
+
+LINIA 3:  <h3>👥 Znajomi</h3>
+          – nagłówek sekcji znajomych
+
+LINIA 5:  @if (Model.Friends.Any())
+          – .Any() = zwraca true jeśli kolekcja ma co najmniej jeden element
+          – bez .Any() i z @foreach na pustej liście nie byłoby błędu,
+            ale lepiej pokazać komunikat „Brak znajomych"
+
+LINIA 7-15: <ul class="list-group"> ... </ul>
+          – lista Bootstrap
+
+LINIA 9:  @foreach (var f in Model.Friends)
+          – iteruje przez wszystkie wpisy Friend dla tego gracza
+
+LINIA 11: <a asp-controller="Player" asp-action="Details" asp-route-id="@f.FriendId">
+              @f.FriendPlayer.Nick
+          </a>
+          – link prowadzący do profilu znajomego
+          – f.FriendId = Id gracza-znajomego (kolumna FK w tabeli Friends)
+          – f.FriendPlayer.Nick = nick znajomego (navigation property, załadowana
+            przez ThenInclude(f => f.FriendPlayer) w kontrolerze)
+          – bez ThenInclude ta właściwość byłaby null i aplikacja rzuciłaby wyjątek
+
+LINIA 18: <p class="text-muted">Brak znajomych.</p>
+          – wyświetlane gdy gracz nie ma żadnych znajomych
+
+================================================================================
+  DLACZEGO ViewComponent ZAMIAST PARTIAL VIEW?
+================================================================================
+
+ViewComponent ma własną logikę (może odpytywać bazę danych samodzielnie).
+Partial View tylko renderuje HTML przekazany z zewnątrz.
+
+Zalety ViewComponent:
+- Enkapsuluje logikę pobierania danych
+- Wielokrotnego użytku w wielu widokach bez duplikowania kodu w kontrolerach
+- Testowalne niezależnie od kontrolera
+- Może być wywołany przez metodę InvokeAsync() dla operacji asynchronicznych

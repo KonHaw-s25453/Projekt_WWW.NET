@@ -1,0 +1,185 @@
+================================================================================
+  WIDOKI RAZOR – OPIS LINIJKA PO LINIJCE
+================================================================================
+
+Widoki (.cshtml) to szablony HTML z kodem C# (Razor).
+Razor pozwala mieszać HTML z C# używając prefiksu „@".
+Każdy widok odpowiada jednej akcji kontrolera.
+
+Ścieżka konwencjonalna: Views/{Controller}/{Action}.cshtml
+
+================================================================================
+  Views/Game/Index.cshtml
+================================================================================
+
+LINIA 1:  @model IEnumerable<GameLibrary.Models.Game>
+          – deklaracja typu modelu przekazanego z kontrolera
+          – IEnumerable<Game> = kolekcja gier; kontroler przekazał ToListAsync()
+
+LINIA 3-5: @{
+               ViewData["Title"] = "Gry";
+           }
+          – blok kodu Razor (nie generuje HTML)
+          – ViewData["Title"] ustawia tytuł strony (używany w _Layout.cshtml
+            w tagu <title>@ViewData["Title"]</title>)
+
+LINIA 7:  <h1>Gry</h1>
+          – zwykły HTML – nagłówek strony
+
+LINIA 9-11: <a asp-action="Create" class="btn btn-primary">+ Nowa gra</a>
+          – Tag Helper ASP.NET Core: asp-action="Create" generuje href="/Game/Create"
+          – Razor automatycznie wnioskuje kontroler z kontekstu bieżącej strony
+
+LINIA 13: <table class="table table-striped">
+          – tabela Bootstrap z naprzemiennym kolorowaniem wierszy
+
+LINIA 23: @foreach (var game in Model)
+          – iteracja przez kolekcję gier z modelu
+          – „Model" = obiekt przekazany z kontrolera (IEnumerable<Game>)
+
+LINIA 29: @string.Join(", ", game.GameTags.Select(gt => gt.Tag.Name))
+          – LINQ: wybiera nazwy tagów z kolekcji GameTags
+          – string.Join łączy je przecinkami, np. „RPG, OpenWorld"
+
+LINIA 32: <a asp-action="Details" asp-route-id="@game.Id" ...>
+          – Tag Helper generuje URL: /Game/Details/{game.Id}
+          – asp-route-id przekazuje id jako segment ścieżki lub query param
+
+================================================================================
+  Views/Game/Details.cshtml
+================================================================================
+
+LINIA 1:  @model GameLibrary.Models.Game
+          – typ modelu to pojedynczy obiekt Game
+
+LINIA 7:  <h1>@Model.Title</h1>
+          – wyświetla tytuł gry; „@Model" = dostęp do obiektu Game
+
+LINIA 13-24: Sekcja tagów
+          – @foreach (var gt in Model.GameTags) iteruje przez tagi
+          – <a asp-controller="Tag" asp-action="Details" asp-route-id="@gt.Tag.Id">
+            generuje link do szczegółów tagu: /Tag/Details/{id}
+          – class="badge bg-primary" = styl Bootstrap dla etykiet
+
+LINIA 29-50: Sekcja graczy
+          – @foreach (var pg in Model.PlayerGames) iteruje przez graczy gry
+          – wyświetla nick gracza (jako link) i liczbę godzin (@pg.HoursPlayed h)
+
+================================================================================
+  Views/Game/Create.cshtml  /  Edit.cshtml  /  Delete.cshtml
+================================================================================
+
+LINIA (Create/Edit): @model GameLibrary.Models.Game
+          – formularz operuje na obiekcie Game
+
+LINIA: <form asp-action="Create" method="post">
+       lub <form asp-action="Edit" method="post">
+          – asp-action generuje atrybut action="" formularza HTML
+          – method="post" = dane wysyłane jako POST
+
+LINIA: <input asp-for="Title" class="form-control" />
+       <input asp-for="ReleaseYear" class="form-control" />
+          – Tag Helper asp-for: generuje <input name="Title" id="Title" ...>
+          – automatycznie dodaje atrybuty walidacji HTML5
+
+LINIA: <span asp-validation-for="Title" class="text-danger"></span>
+          – wyświetla błędy walidacji dla pola Title (np. „Pole wymagane")
+
+LINIA: @Html.AntiForgeryToken()
+       lub <input type="hidden" asp-antiforgery="true">
+          – wstawia ukryty token CSRF do formularza
+          – serwer weryfikuje ten token przy każdym POST
+
+================================================================================
+  Views/Player/Index.cshtml
+================================================================================
+
+Analogiczny do Game/Index.cshtml.
+
+LINIA 24: @foreach (var player in Model)
+          – iteruje przez listę graczy
+
+LINIA 26-27: <td>@player.Nick</td>
+             <td>@player.Email</td>
+          – wyświetla nick i email gracza
+
+================================================================================
+  Views/Player/Details.cshtml
+================================================================================
+
+LINIA 1:  @model GameLibrary.Models.Player
+          – model to pojedynczy gracz z załadowanymi relacjami
+
+LINIA 7:  <h1>@Model.Nick</h1>
+LINIA 8:  <p class="text-muted">@Model.Email</p>
+          – wyświetla dane gracza
+
+LINIA 13-34: Sekcja biblioteki gier
+          – @if (Model.PlayerGames.Any())
+            – sprawdza czy kolekcja gier jest niepusta
+          – tabela: tytuł gry (link), rok wydania, liczba godzin
+          – link do /Game/Details/{id}: asp-controller="Game" asp-action="Details"
+
+LINIA 42-43: <vc:friend-list player-id="@Model.Id" friends="@Model.Friends" />
+          – Tag Helper wywołujący ViewComponent FriendListViewComponent
+          – „vc:" to prefix dla ViewComponent
+          – player-id i friends to parametry przekazane do metody Invoke()
+
+================================================================================
+  Views/Tag/Details.cshtml
+================================================================================
+
+LINIA 1:  @model GameLibrary.Models.Tag
+          – model to tag z załadowanymi grami (przez GameTags)
+
+LINIA 12-24: Lista gier w kategorii
+          – @foreach (var gt in Model.GameTags)
+          – wyświetla tytuł gry i rok wydania jako link do /Game/Details/{id}
+
+================================================================================
+  Views/Shared/_Layout.cshtml
+================================================================================
+
+Plik _Layout.cshtml to szablon bazowy dla wszystkich stron.
+Wszystkie widoki dziedziczą z niego przez wpis w Views/_ViewStart.cshtml:
+  @{ Layout = "_Layout"; }
+
+Kluczowe elementy layoutu:
+- <title>@ViewData["Title"] - GameLibrary</title>
+  → tytuł zakładki przeglądarki; ViewData["Title"] ustawia każdy widok
+- @RenderBody()
+  → miejsce, gdzie wstrzykiwana jest zawartość konkretnego widoku
+- Nawigacja Bootstrap z linkami do /Game, /Player, /Tag
+
+================================================================================
+  Views/_ViewImports.cshtml
+================================================================================
+
+Zawiera globalne importy dostępne we wszystkich widokach:
+- @using GameLibrary.Models   – import modeli
+- @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+  → aktywuje Tag Helpers (asp-action, asp-for, vc: itd.) we wszystkich widokach
+- @using GameLibrary.ViewComponents
+  → import ViewComponent (potrzebny dla <vc:friend-list>)
+
+================================================================================
+  Views/Shared/Components/FriendList/Default.cshtml
+================================================================================
+
+LINIA 1:  @model (int PlayerId, ICollection<GameLibrary.Models.Friend> Friends)
+          – model to krotka (tuple): PlayerId i kolekcja Friend
+          – wartość krotki przekazuje metoda Invoke() ViewComponent
+
+LINIA 3:  <h3>👥 Znajomi</h3>
+
+LINIA 5:  @if (Model.Friends.Any())
+          – sprawdza czy gracz ma jakichkolwiek znajomych
+
+LINIA 9:  @foreach (var f in Model.Friends)
+          – iteruje przez kolekcję znajomych
+
+LINIA 11: <a asp-controller="Player" asp-action="Details" asp-route-id="@f.FriendId">
+              @f.FriendPlayer.Nick
+          </a>
+          – link do profilu znajomego; FriendId = Id znajomego w bazie
+          – @f.FriendPlayer.Nick = nick znajomego (załadowany przez ThenInclude)

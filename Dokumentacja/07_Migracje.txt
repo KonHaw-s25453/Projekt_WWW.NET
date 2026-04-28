@@ -1,0 +1,139 @@
+================================================================================
+  MIGRACJE EF CORE – OPIS LINIJKA PO LINIJCE
+================================================================================
+
+Migracje to mechanizm EF Core pozwalający zarządzać schematem bazy danych
+w kontrolowany sposób. Każda migracja to klasa C# z metodami Up() i Down().
+
+Folder: GameLibrary/Migrations/
+
+PLIKI:
+- 20260428073155_Init.cs             – migracja tworząca cały schemat (Up/Down)
+- 20260428073155_Init.Designer.cs    – automatycznie generowany plik pomocniczy
+- AppDbContextModelSnapshot.cs       – snapshot aktualnego stanu modelu
+
+================================================================================
+  Czym są migracje?
+================================================================================
+
+EF Core porównuje bieżący stan modeli C# z ostatnim snapshotem.
+Gdy wykryje różnicę (np. nowe pole w klasie), generuje nową migrację.
+
+Komendy (uruchamiane w terminalu wewnątrz katalogu projektu):
+
+  dotnet ef migrations add NazwaMigracji
+  – tworzy nowy plik migracji na podstawie zmian w modelach
+
+  dotnet ef database update
+  – stosuje wszystkie niezastosowane migracje do bazy danych
+
+W tym projekcie migracje uruchamiane są AUTOMATYCZNIE przy starcie
+(Program.cs: db.Database.Migrate())
+
+================================================================================
+  PLIK: Migrations/20260428073155_Init.cs
+================================================================================
+
+Nazwa pliku zawiera timestamp 20260428073155 = 2026-04-28 07:31:55
+(data i godzina wygenerowania migracji)
+
+--- Metoda Up() – tworzy schemat ---
+
+Up() jest wywoływana przy aktualizacji bazy do nowszej wersji.
+
+LINIA 15-27: migrationBuilder.CreateTable(name: "Games", ...)
+          – tworzy tabelę Games
+          – Id: typ INTEGER, AUTOINCREMENT (.Annotation("Sqlite:Autoincrement", true))
+          – Title: typ TEXT, NOT NULL (nullable: false)
+          – ReleaseYear: typ INTEGER, NOT NULL
+          – PRIMARY KEY: kolumna Id (PK_Games)
+
+LINIA 29-41: migrationBuilder.CreateTable(name: "Players", ...)
+          – tworzy tabelę Players
+          – Id: INTEGER AUTOINCREMENT
+          – Nick: TEXT NOT NULL
+          – Email: TEXT NOT NULL
+          – PRIMARY KEY: Id (PK_Players)
+
+LINIA 43-54: migrationBuilder.CreateTable(name: "Tags", ...)
+          – tworzy tabelę Tags
+          – Id: INTEGER AUTOINCREMENT
+          – Name: TEXT NOT NULL
+          – PRIMARY KEY: Id (PK_Tags)
+
+LINIA 56-78: migrationBuilder.CreateTable(name: "Friends", ...)
+          – tworzy tabelę Friends (tabela pośrednia self-referencing)
+          – PlayerId: INTEGER NOT NULL (FK → Players.Id)
+          – FriendId: INTEGER NOT NULL (FK → Players.Id)
+          – PRIMARY KEY złożony: (PlayerId, FriendId)
+          – FOREIGN KEY FK_Friends_Players_FriendId
+              → FriendId REFERENCES Players(Id) ON DELETE RESTRICT
+          – FOREIGN KEY FK_Friends_Players_PlayerId
+              → PlayerId REFERENCES Players(Id) ON DELETE RESTRICT
+          – RESTRICT (zamiast CASCADE) zapobiega błędowi cyklicznego usunięcia
+
+LINIA 80-103: migrationBuilder.CreateTable(name: "PlayerGames", ...)
+          – tworzy tabelę PlayerGames (tabela pośrednia Player ↔ Game)
+          – PlayerId: FK → Players.Id
+          – GameId: FK → Games.Id
+          – HoursPlayed: INTEGER NOT NULL
+          – PRIMARY KEY złożony: (PlayerId, GameId)
+          – FOREIGN KEY z CASCADE DELETE:
+              gdy gracz lub gra zostanie usunięta, powiązane PlayerGames
+              są automatycznie kasowane
+
+LINIA 105-127: migrationBuilder.CreateTable(name: "GameTags", ...)
+          – tworzy tabelę GameTags (tabela pośrednia Game ↔ Tag)
+          – GameId: FK → Games.Id (CASCADE)
+          – TagId: FK → Tags.Id (CASCADE)
+          – PRIMARY KEY złożony: (GameId, TagId)
+
+--- Seed Data w migracji ---
+
+LINIA 129-137: migrationBuilder.InsertData(table: "Games", ...)
+          – wstawia 3 gry startowe: Wiedźmin 3, Minecraft, Cyberpunk 2077
+
+LINIA 139-146: migrationBuilder.InsertData(table: "Players", ...)
+          – wstawia 2 graczy: Jan i Anna
+
+LINIA 148-157: migrationBuilder.InsertData(table: "Tags", ...)
+          – wstawia 4 tagi: RPG, FPS, Indie, OpenWorld
+
+LINIA 159-162: migrationBuilder.InsertData(table: "Friends", ...)
+          – wstawia relację znajomości: PlayerId=1 (Jan) ↔ FriendId=2 (Anna)
+
+LINIA 164-174: migrationBuilder.InsertData(table: "GameTags", ...)
+          – przypisuje tagi do gier:
+            {1,1} = Wiedźmin3–RPG, {1,4} = Wiedźmin3–OpenWorld,
+            {2,3} = Minecraft–Indie, {3,1} = Cyberpunk–RPG, {3,4} = Cyberpunk–OpenWorld
+
+LINIA 176-184: migrationBuilder.InsertData(table: "PlayerGames", ...)
+          – przypisuje gry graczom z godzinami:
+            Jan–Wiedźmin3 (120h), Jan–Minecraft (50h), Anna–Wiedźmin3 (80h)
+
+--- Indeksy ---
+
+LINIA 186-199: migrationBuilder.CreateIndex(...)
+          – tworzy indeksy na kolumnach FK dla szybszego wyszukiwania:
+            IX_Friends_FriendId    – szybki lookup znajomych
+            IX_GameTags_TagId      – szybki lookup tagów gry
+            IX_PlayerGames_GameId  – szybki lookup graczy gry
+
+--- Metoda Down() – cofa zmiany ---
+
+Down() jest wywoływana przy rollbacku migracji.
+Usuwa tabele w odwrotnej kolejności (najpierw tabele z FK, potem tabele główne):
+  1. Friends, GameTags, PlayerGames (tabele z FK)
+  2. Tags, Games, Players (tabele główne)
+
+Kolejność jest ważna ze względu na ograniczenia FK: nie można usunąć
+tabeli głównej jeśli istnieją wiersze w tabelach zależnych.
+
+================================================================================
+  PLIK: Migrations/AppDbContextModelSnapshot.cs
+================================================================================
+
+Snapshot to „zdjęcie" aktualnego stanu modelu EF Core.
+EF Core porównuje ten plik z obecnym kodem modeli przy tworzeniu nowej migracji.
+Plik jest automatycznie aktualizowany przez EF Core.
+Nie należy go edytować ręcznie.
