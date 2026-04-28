@@ -1,0 +1,133 @@
+================================================================================
+  KONFIGURACJA – OPIS PLIKÓW USTAWIEŃ
+================================================================================
+
+================================================================================
+  PLIK: appsettings.json
+================================================================================
+
+Główny plik konfiguracyjny aplikacji. Ładowany zawsze, niezależnie od środowiska.
+Odczytywany przez builder.Configuration w Program.cs.
+
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+
+KLUCZ "Logging" → "LogLevel" → "Default": "Information"
+          – minimalny poziom logowania dla wszystkich komponentów
+          – poziomy (od najniższego): Trace, Debug, Information, Warning, Error, Critical
+          – „Information" = logowane są komunikaty informacyjne i powyżej
+
+KLUCZ "Logging" → "LogLevel" → "Microsoft.AspNetCore": "Warning"
+          – dla frameworka ASP.NET Core logowane są tylko ostrzeżenia i błędy
+          – ogranicza szum logów od wewnętrznych komponentów frameworka
+
+KLUCZ "AllowedHosts": "*"
+          – Host Filtering Middleware: akceptuj żądania z dowolnego nagłówka Host
+          – „*" = brak ograniczeń (przydatne w środowisku dev/staging)
+          – w produkcji warto ustawić konkretną domenę, np. "example.com"
+
+UWAGA: W tym projekcie ConnectionString dla SQLite jest ustawiony w Program.cs
+       jako wartość domyślna. Można go dodać do appsettings.json:
+         "ConnectionStrings": { "DefaultConnection": "Data Source=gamelibrary.db" }
+
+================================================================================
+  PLIK: appsettings.Development.json
+================================================================================
+
+Plik ładowany TYLKO w środowisku Development (zmienna ASPNETCORE_ENVIRONMENT=Development).
+Nadpisuje wartości z appsettings.json.
+
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+
+          – identyczna konfiguracja logowania jak w głównym pliku
+          – w Development można ustawić bardziej szczegółowe logi, np. "Default": "Debug"
+
+================================================================================
+  PLIK: GameLibrary.csproj
+================================================================================
+
+Plik projektu .NET (XML). Definiuje ustawienia projektu i zależności.
+
+<Project Sdk="Microsoft.NET.Sdk.Web">
+          – typ projektu: aplikacja webowa ASP.NET Core
+
+<PropertyGroup>
+  <TargetFramework>net9.0</TargetFramework>
+          – wersja .NET: .NET 9
+
+  <Nullable>enable</Nullable>
+          – włącza nullable reference types (C# 8+)
+          – kompilator ostrzega o potencjalnych wartościach null
+          – dlatego w modelach użyto „= string.Empty" i „null!"
+
+  <ImplicitUsings>enable</ImplicitUsings>
+          – automatyczny import najczęstszych przestrzeni nazw
+          – nie trzeba pisać „using System;" itd. w każdym pliku
+</PropertyGroup>
+
+<ItemGroup>
+  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" ... />
+          – narzędzia EF Core dla designtime (generowanie migracji)
+          – potrzebne do komendy dotnet ef migrations add
+
+  <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" ... />
+          – dostawca (provider) EF Core dla SQLite
+          – implementuje tłumaczenie LINQ → SQL dla SQLite
+
+  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" ... />
+          – narzędzia CLI dla EF Core (dotnet ef)
+</ItemGroup>
+
+================================================================================
+  PLIK: Properties/launchSettings.json
+================================================================================
+
+Konfiguracja uruchamiania aplikacji w środowisku developerskim.
+NIE jest wdrażana na produkcję.
+
+Sekcja "profiles":
+  "https" – profil HTTPS (domyślny w Visual Studio)
+    applicationUrl: "https://localhost:7xxx;http://localhost:5xxx"
+    ASPNETCORE_ENVIRONMENT: "Development"
+    – włącza tryb deweloperski (szczegółowe błędy, hot reload)
+
+  "http" – profil HTTP
+    – używany np. w kontenerach bez certyfikatu SSL
+
+  "IIS Express" – profil dla IIS Express (opcjonalny, tylko Windows)
+
+================================================================================
+  FOLDER: wwwroot/
+================================================================================
+
+Folder z plikami statycznymi serwowanymi bezpośrednio (bez przetwarzania przez C#).
+
+wwwroot/
+├── css/
+│   └── site.css        – własne style CSS aplikacji
+├── js/
+│   └── site.js         – własne skrypty JavaScript
+├── lib/
+│   ├── bootstrap/      – Bootstrap 5 (CSS + JS)
+│   └── jquery/         – jQuery (potrzebne dla walidacji formularzy)
+└── favicon.ico         – ikona strony
+
+Dostęp: pliki z wwwroot są dostępne pod ścieżką główną
+np. wwwroot/css/site.css → https://localhost/css/site.css
+
+Bootstrap 5 zapewnia responsywny layout, stylowanie przycisków (btn-primary,
+btn-danger), tabel (table-striped), odznak (badge), list (list-group) itd.

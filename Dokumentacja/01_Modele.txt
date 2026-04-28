@@ -1,0 +1,170 @@
+================================================================================
+  MODELE DANYCH – OPIS LINIJKA PO LINIJCE
+================================================================================
+
+Modele to klasy C# odwzorowujące tabele w bazie danych.
+Każda właściwość (property) = kolumna w tabeli.
+EF Core tłumaczy te klasy na SQL automatycznie.
+
+--------------------------------------------------------------------------------
+  PLIK: Models/Player.cs
+--------------------------------------------------------------------------------
+
+LINIA 1:  namespace GameLibrary.Models;
+          – deklaracja przestrzeni nazw; wszystkie klasy w folderze Models
+            należą do tej przestrzeni
+
+LINIA 3:  public class Player
+          – definicja klasy Player; EF Core utworzy tabelę „Players" (liczba mnoga)
+
+LINIA 5:  public int Id { get; set; }
+          – klucz główny (Primary Key); EF Core rozpoznaje nazwę „Id" automatycznie
+            i ustawia kolumnę jako INTEGER AUTO INCREMENT w bazie
+
+LINIA 6:  public string Nick { get; set; } = string.Empty;
+          – nick gracza (typ TEXT w SQLite); inicjalizacja „string.Empty"
+            zapobiega ostrzeżeniom o wartości null w C# 11+
+
+LINIA 7:  public string Email { get; set; } = string.Empty;
+          – adres e-mail gracza (typ TEXT w SQLite)
+
+LINIA 9-10: public ICollection<PlayerGame> PlayerGames { get; set; } = new List<PlayerGame>();
+          – właściwość nawigacyjna (Navigation Property)
+          – reprezentuje kolekcję wpisów w tabeli pośredniej PlayerGame
+          – EF Core używa jej do budowania JOINów (Include/ThenInclude)
+          – inicjalizacja „new List<>" zapobiega NullReferenceException
+
+LINIA 12-13: public ICollection<Friend> Friends { get; set; } = new List<Friend>();
+          – właściwość nawigacyjna do tabeli Friend (relacja self-referencing)
+          – zawiera listę wpisów gdzie ten gracz jest stroną „PlayerId"
+
+--------------------------------------------------------------------------------
+  PLIK: Models/Game.cs
+--------------------------------------------------------------------------------
+
+LINIA 3:  public class Game
+          – klasa gry; EF Core utworzy tabelę „Games"
+
+LINIA 5:  public int Id { get; set; }
+          – klucz główny gry
+
+LINIA 6:  public string Title { get; set; } = string.Empty;
+          – tytuł gry
+
+LINIA 7:  public int ReleaseYear { get; set; }
+          – rok wydania gry (liczba całkowita, np. 2015)
+
+LINIA 9-10: public ICollection<PlayerGame> PlayerGames { get; set; } = new List<PlayerGame>();
+          – właściwość nawigacyjna do tabeli pośredniej PlayerGame
+          – pozwala zapytać „którzy gracze posiadają tę grę"
+
+LINIA 12-13: public ICollection<GameTag> GameTags { get; set; } = new List<GameTag>();
+          – właściwość nawigacyjna do tabeli pośredniej GameTag
+          – pozwala zapytać „jakie tagi ma ta gra"
+
+--------------------------------------------------------------------------------
+  PLIK: Models/Tag.cs
+--------------------------------------------------------------------------------
+
+LINIA 3:  public class Tag
+          – klasa tagu/kategorii; EF Core utworzy tabelę „Tags"
+
+LINIA 5:  public int Id { get; set; }
+          – klucz główny tagu
+
+LINIA 6:  public string Name { get; set; } = string.Empty;
+          – nazwa tagu, np. „RPG", „FPS", „Indie"
+
+LINIA 8-9: public ICollection<GameTag> GameTags { get; set; } = new List<GameTag>();
+          – właściwość nawigacyjna do tabeli pośredniej GameTag
+          – pozwala zapytać „które gry mają ten tag"
+
+--------------------------------------------------------------------------------
+  PLIK: Models/PlayerGame.cs
+  (TABELA POŚREDNIA: relacja M:N Player ↔ Game)
+--------------------------------------------------------------------------------
+
+LINIA 1:  // Tabela pośrednia dla relacji M:N Player <-> Game
+          – komentarz informacyjny
+
+LINIA 3:  public class PlayerGame
+          – klasa tabeli pośredniej; EF Core utworzy tabelę „PlayerGames"
+          – klucz główny tej tabeli to para (PlayerId, GameId) – klucz złożony
+            (patrz AppDbContext.cs, metoda OnModelCreating)
+
+LINIA 5:  public int PlayerId { get; set; }
+          – klucz obcy (Foreign Key) wskazujący na Player.Id
+
+LINIA 6:  public Player Player { get; set; } = null!;
+          – właściwość nawigacyjna do obiektu Player
+          – „null!" = C# null-forgiving operator; wartość wypełnia EF Core
+
+LINIA 8:  public int GameId { get; set; }
+          – klucz obcy wskazujący na Game.Id
+
+LINIA 9:  public Game Game { get; set; } = null!;
+          – właściwość nawigacyjna do obiektu Game
+
+LINIA 11: public int HoursPlayed { get; set; }
+          – DODATKOWA kolumna w tabeli pośredniej
+          – przechowuje liczbę godzin, jakie gracz spędził w tej grze
+          – to właśnie uzasadnia istnienie osobnej klasy (zamiast prostej listy)
+
+--------------------------------------------------------------------------------
+  PLIK: Models/GameTag.cs
+  (TABELA POŚREDNIA: relacja M:N Game ↔ Tag)
+--------------------------------------------------------------------------------
+
+LINIA 3:  public class GameTag
+          – klasa tabeli pośredniej; EF Core utworzy tabelę „GameTags"
+          – klucz główny to para (GameId, TagId) – klucz złożony
+
+LINIA 5:  public int GameId { get; set; }
+          – klucz obcy wskazujący na Game.Id
+
+LINIA 6:  public Game Game { get; set; } = null!;
+          – właściwość nawigacyjna do obiektu Game
+
+LINIA 8:  public int TagId { get; set; }
+          – klucz obcy wskazujący na Tag.Id
+
+LINIA 9:  public Tag Tag { get; set; } = null!;
+          – właściwość nawigacyjna do obiektu Tag
+
+--------------------------------------------------------------------------------
+  PLIK: Models/Friend.cs
+  (TABELA POŚREDNIA: relacja self-referencing M:N Player ↔ Player)
+--------------------------------------------------------------------------------
+
+LINIA 3:  public class Friend
+          – klasa tabeli pośredniej; EF Core utworzy tabelę „Friends"
+          – obie kolumny są kluczami obcymi do tej samej tabeli Players
+          – klucz główny to para (PlayerId, FriendId)
+
+LINIA 5:  public int PlayerId { get; set; }
+          – klucz obcy wskazujący na Player.Id (gracz, który „ma znajomego")
+
+LINIA 6:  public Player Player { get; set; } = null!;
+          – właściwość nawigacyjna do gracza-właściciela relacji
+
+LINIA 8:  public int FriendId { get; set; }
+          – klucz obcy wskazujący na Player.Id (gracz będący znajomym)
+
+LINIA 9:  public Player FriendPlayer { get; set; } = null!;
+          – właściwość nawigacyjna do gracza-znajomego
+          – inna nazwa niż Player, bo EF Core nie może mieć dwóch nawigacji
+            do tej samej tabeli z tą samą nazwą
+
+--------------------------------------------------------------------------------
+  PLIK: Models/ErrorViewModel.cs
+--------------------------------------------------------------------------------
+
+public class ErrorViewModel
+          – prosty model używany przez stronę błędu (Views/Shared/Error.cshtml)
+
+public string? RequestId { get; set; }
+          – identyfikator żądania HTTP; wyświetlany na stronie błędu przy debugowaniu
+
+public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+          – właściwość obliczana (bez settera); zwraca true jeśli RequestId jest
+            niepuste (wyrażenie skrótowe dla warunku w widoku)

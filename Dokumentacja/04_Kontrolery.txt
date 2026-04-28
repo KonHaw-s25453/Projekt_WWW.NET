@@ -1,0 +1,149 @@
+================================================================================
+  KONTROLERY – OPIS LINIJKA PO LINIJCE
+================================================================================
+
+Kontrolery w ASP.NET Core MVC obsługują żądania HTTP.
+Każda publiczna metoda to „akcja" dostępna pod określonym URL.
+Wzorzec URL: /{Controller}/{Action}/{id?}
+
+================================================================================
+  PLIK: Controllers/HomeController.cs
+================================================================================
+
+LINIA 1:  using System.Diagnostics;
+          – potrzebne do Activity.Current (identyfikator bieżącej operacji diagnostycznej)
+
+LINIA 2:  using Microsoft.AspNetCore.Mvc;
+          – import bazowych klas MVC: Controller, IActionResult, ViewResult itd.
+
+LINIA 3:  using GameLibrary.Models;
+          – import modeli (potrzebny dla ErrorViewModel)
+
+LINIA 7:  public class HomeController : Controller
+          – HomeController dziedziczy po Controller (klasa bazowa MVC)
+          – ASP.NET Core rozpoznaje go jako kontroler dzięki tej dziedziczności
+
+LINIA 9:  public IActionResult Index()
+          – akcja dostępna pod GET /
+          – zwraca widok Views/Home/Index.cshtml
+
+LINIA 14: public IActionResult Privacy()
+          – akcja dostępna pod GET /Home/Privacy
+          – zwraca widok Views/Home/Privacy.cshtml
+
+LINIA 16: [ResponseCache(Duration = 0, ...)]
+          – atrybut wymuszający brak cache dla strony błędów
+          – zapobiega pokazaniu przestarzałego błędu z pamięci podręcznej
+
+LINIA 17: public IActionResult Error()
+          – akcja obsługująca błędy HTTP
+          – Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            → pobiera identyfikator bieżącego śladu diagnostycznego
+            → „?." = bezpieczne wywołanie (null-safe), nie rzuci NullReferenceException
+            → „??" = wartość domyślna gdy lewa strona jest null
+
+================================================================================
+  PLIK: Controllers/GameController.cs
+================================================================================
+
+LINIA 8:  public class GameController : Controller
+          – obsługuje operacje CRUD dla gier
+          – URL prefix: /Game
+
+LINIA 10: private readonly AppDbContext _context;
+          – prywatne pole przechowujące instancję DbContext
+          – readonly = można przypisać tylko w konstruktorze
+
+LINIA 12-15: public GameController(AppDbContext context)
+             {
+                 _context = context;
+             }
+          – konstruktor wstrzykujący DbContext przez Dependency Injection
+          – ASP.NET Core automatycznie dostarcza AppDbContext zarejestrowany w Program.cs
+
+LINIA 17-25: // GET /Game — lista wszystkich gier
+             public async Task<IActionResult> Index()
+             {
+                 var games = await _context.Games
+                     .Include(g => g.GameTags)
+                         .ThenInclude(gt => gt.Tag)
+                     .ToListAsync();
+                 return View(games);
+             }
+          – async/await = operacja asynchroniczna (nie blokuje wątku)
+          – _context.Games = zapytanie do tabeli Games (SELECT * FROM Games)
+          – .Include(g => g.GameTags) = JOIN z tabelą GameTags (eager loading)
+          – .ThenInclude(gt => gt.Tag) = dodatkowy JOIN z tabelą Tags
+          – bez Include() właściwości nawigacyjne byłyby null (lazy loading wyłączony)
+          – .ToListAsync() = wykonuje zapytanie SQL i zwraca listę obiektów Game
+          – return View(games) = przekazuje listę do widoku Views/Game/Index.cshtml
+
+LINIA 27-39: // GET /Game/Details/5
+             public async Task<IActionResult> Details(int id)
+          – parametr int id pochodzi z URL: /Game/Details/5 → id = 5
+          – .Include(g => g.PlayerGames).ThenInclude(pg => pg.Player)
+            = dołącza graczy posiadających tę grę (JOIN przez PlayerGames)
+          – .Include(g => g.GameTags).ThenInclude(gt => gt.Tag)
+            = dołącza tagi gry (JOIN przez GameTags)
+          – .FirstOrDefaultAsync(g => g.Id == id)
+            = SQL: SELECT TOP 1 * FROM Games WHERE Id = @id
+          – if (game == null) return NotFound()
+            = zwraca HTTP 404 jeśli gra nie istnieje
+
+LINIA 41-56: // GET /Game/Create i POST /Game/Create
+          – GET: wyświetla pusty formularz
+          – [HttpPost] = akcja reaguje tylko na żądania POST
+          – [ValidateAntiForgeryToken] = sprawdza token CSRF (ochrona przed atakiem CSRF)
+          – [Bind("Title,ReleaseYear")] = whitelist pól formularza (model binding)
+            – zapobiega mass assignment (nadpisaniu Id lub innych pól)
+          – if (!ModelState.IsValid) return View(game)
+            = jeśli walidacja formularza nie przeszła, wróć do formularza z błędami
+          – _context.Games.Add(game) = dodaje obiekt do śledzenia EF Core
+          – await _context.SaveChangesAsync() = wykonuje INSERT INTO Games...
+          – return RedirectToAction(nameof(Index)) = przekieruj na /Game
+
+LINIA 58-77: // GET /Game/Edit/5 i POST /Game/Edit/5
+          – GET: .FindAsync(id) = SELECT * WHERE Id = @id (szybsze dla PK)
+          – POST: _context.Update(game) = oznacza cały obiekt jako zmodyfikowany
+          – SaveChangesAsync() = wykonuje UPDATE Games SET ... WHERE Id = @id
+
+LINIA 79-99: // GET /Game/Delete/5 i POST /Game/Delete/5
+          – [HttpPost, ActionName("Delete")] = metoda DeleteConfirmed() reaguje
+            na POST /Game/Delete/5 (ActionName nadpisuje nazwę akcji)
+          – _context.Games.Remove(game) = oznacza rekord do usunięcia
+          – SaveChangesAsync() = wykonuje DELETE FROM Games WHERE Id = @id
+
+================================================================================
+  PLIK: Controllers/PlayerController.cs
+================================================================================
+
+Struktura identyczna z GameController, różnice:
+
+LINIA 19-22: public async Task<IActionResult> Index()
+          – pobiera listę graczy bez Include (tabela Players jest prosta)
+
+LINIA 26-37: public async Task<IActionResult> Details(int id)
+          – .Include(p => p.PlayerGames).ThenInclude(pg => pg.Game)
+            = dołącza bibliotekę gier gracza
+          – .Include(p => p.Friends).ThenInclude(f => f.FriendPlayer)
+            = dołącza listę znajomych (z ich danymi przez nawigację FriendPlayer)
+
+LINIA 39-43: // GET /Player/Create
+          – brak ViewBag/ViewData – formularz gracza jest prosty (Nick + Email)
+
+LINIA 48:  [Bind("Nick,Email")] Player player
+          – tylko Nick i Email mogą być przypisane z formularza
+          – Id jest pominięte (będzie 0, EF Core nada AUTO INCREMENT)
+
+================================================================================
+  PLIK: Controllers/TagController.cs
+================================================================================
+
+Analogiczna struktura do GameController.
+
+LINIA 24-33: public async Task<IActionResult> Details(int id)
+          – .Include(t => t.GameTags).ThenInclude(gt => gt.Game)
+            = dołącza gry przypisane do tego tagu
+
+LINIA 45:  [Bind("Name")] Tag tag
+          – tylko pole Name może być przypisane z formularza tworzenia tagu

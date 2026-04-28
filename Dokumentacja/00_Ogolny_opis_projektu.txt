@@ -1,0 +1,107 @@
+================================================================================
+  GAME LIBRARY – OGÓLNY OPIS PROJEKTU
+================================================================================
+
+TEMAT
+------
+„Game Library" to webowa aplikacja ASP.NET Core MVC, która umożliwia zarządzanie
+biblioteką gier komputerowych. Użytkownicy (gracze) mogą posiadać gry, oceniać czas
+spędzony w danej grze, kategoryzować gry tagami oraz śledzić listę znajomych.
+
+TECHNOLOGIE
+-----------
+- Język programowania : C# (.NET 9 / ASP.NET Core MVC)
+- ORM                 : Entity Framework Core (EF Core) z bazą SQLite
+- Baza danych         : SQLite (plik gamelibrary.db tworzony automatycznie)
+- Widoki              : Razor (.cshtml) + Bootstrap 5 (styl)
+- Wzorzec archit.     : MVC (Model–View–Controller)
+
+STRUKTURA KATALOGÓW
+-------------------
+GameLibrary/
+│
+├── Controllers/          – kontrolery MVC (logika HTTP)
+│   ├── HomeController.cs
+│   ├── GameController.cs
+│   ├── PlayerController.cs
+│   └── TagController.cs
+│
+├── Data/                 – kontekst bazy danych
+│   └── AppDbContext.cs
+│
+├── Migrations/           – automatyczne migracje EF Core
+│
+├── Models/               – klasy encji / modeli danych
+│   ├── Player.cs
+│   ├── Game.cs
+│   ├── Tag.cs
+│   ├── PlayerGame.cs     (tabela pośrednia)
+│   ├── GameTag.cs        (tabela pośrednia)
+│   └── Friend.cs         (tabela pośrednia – self-referencing)
+│
+├── ViewComponents/       – mini-kontrolery osadzane w widokach
+│   └── FriendListViewComponent.cs
+│
+├── Views/                – szablony Razor HTML
+│   ├── Game/
+│   ├── Player/
+│   ├── Tag/
+│   ├── Home/
+│   └── Shared/
+│       └── Components/
+│           └── FriendList/
+│               └── Default.cshtml
+│
+├── Program.cs            – punkt wejścia aplikacji / konfiguracja
+├── appsettings.json      – konfiguracja aplikacji (connection string, logi)
+└── GameLibrary.csproj    – definicja projektu .NET
+
+ENCJE (TABELE BAZY DANYCH)
+--------------------------
+1. Player      – gracz (Id, Nick, Email)
+2. Game        – gra   (Id, Title, ReleaseYear)
+3. Tag         – tag/kategoria (Id, Name)
+4. PlayerGame  – tabela pośrednia Player ↔ Game (PlayerId, GameId, HoursPlayed)
+5. GameTag     – tabela pośrednia Game ↔ Tag    (GameId, TagId)
+6. Friend      – tabela pośrednia Player ↔ Player (PlayerId, FriendId)
+
+RELACJE WIELE-DO-WIELU (M:N)
+-----------------------------
+1. Player ↔ Game (przez PlayerGame)
+   – gracz może mieć wiele gier; gra może należeć do wielu graczy
+   – pole HoursPlayed przechowuje liczbę godzin spędzonych w grze
+
+2. Game ↔ Tag (przez GameTag)
+   – gra może mieć wiele tagów; tag może opisywać wiele gier
+
+3. Player ↔ Player (przez Friend) – relacja samozwrotna (self-referencing)
+   – gracz może mieć wielu znajomych; każdy znajomy to też gracz
+
+DZIAŁANIE KROK PO KROKU (ŻĄDANIE HTTP)
+----------------------------------------
+1. Przeglądarka wysyła żądanie HTTP, np. GET /Game
+2. Router ASP.NET Core dopasowuje URL do kontrolera i akcji: GameController.Index()
+3. Kontroler odpytuje bazę danych przez AppDbContext (EF Core → SQLite)
+4. EF Core generuje SQL, wykonuje zapytanie, zwraca obiekty C#
+5. Kontroler przekazuje dane do widoku Razor (return View(games))
+6. Widok Razor generuje HTML (+ Bootstrap) i odsyła odpowiedź do przeglądarki
+
+DANE STARTOWE (SEED DATA)
+--------------------------
+Przy pierwszym uruchomieniu EF Core automatycznie wstawia do bazy:
+- Tagi: RPG, FPS, Indie, OpenWorld
+- Gracze: Jan (jan@example.com), Anna (anna@example.com)
+- Gry: Wiedźmin 3 (2015), Minecraft (2011), Cyberpunk 2077 (2020)
+- PlayerGame: Jan – Wiedźmin 3 (120h), Jan – Minecraft (50h), Anna – Wiedźmin 3 (80h)
+- GameTag: Wiedźmin 3→RPG, Wiedźmin 3→OpenWorld, Minecraft→Indie,
+           Cyberpunk→RPG, Cyberpunk→OpenWorld
+- Friend: Jan zna Annę
+
+CRUD (CREATE / READ / UPDATE / DELETE)
+---------------------------------------
+Każdy z trzech głównych zasobów (Game, Player, Tag) posiada pełny zestaw akcji:
+  Index   – lista wszystkich rekordów
+  Details – szczegóły jednego rekordu
+  Create  – formularz tworzenia nowego rekordu (GET) + zapis (POST)
+  Edit    – formularz edycji (GET) + zapis zmian (POST)
+  Delete  – strona potwierdzenia usunięcia (GET) + faktyczne usunięcie (POST)

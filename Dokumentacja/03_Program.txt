@@ -1,0 +1,102 @@
+================================================================================
+  Program.cs – OPIS LINIJKA PO LINIJCE
+================================================================================
+
+Plik: GameLibrary/Program.cs
+
+Program.cs to punkt wejścia aplikacji ASP.NET Core.
+Tutaj konfigurujemy usługi (DI container) i pipeline HTTP.
+
+--------------------------------------------------------------------------------
+
+LINIA 1:  using GameLibrary.Data;
+          – import przestrzeni nazw Data, żeby użyć AppDbContext
+
+LINIA 2:  using Microsoft.EntityFrameworkCore;
+          – import EF Core (UseSqlite, Migrate itp.)
+
+LINIA 4:  var builder = WebApplication.CreateBuilder(args);
+          – tworzy obiekt WebApplicationBuilder
+          – args to argumenty wiersza poleceń (może zawierać np. --urls)
+          – builder.Services = kontener Dependency Injection (DI)
+          – builder.Configuration = dostęp do appsettings.json i zmiennych środowiskowych
+
+LINIA 6-9: // Rejestracja DbContext z bazą SQLite
+           builder.Services.AddDbContext<AppDbContext>(options =>
+               options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
+                   ?? "Data Source=gamelibrary.db"));
+          – rejestruje AppDbContext w kontenerze DI jako usługę Scoped
+          – opcje: UseSqlite = użyj bazy SQLite
+          – GetConnectionString("DefaultConnection") czyta z appsettings.json:
+              "ConnectionStrings": { "DefaultConnection": "Data Source=gamelibrary.db" }
+          – „?? "Data Source=gamelibrary.db"" = wartość domyślna jeśli brak klucza w config
+          – dzięki tej rejestracji kontrolery mogą przyjmować AppDbContext w konstruktorze
+
+LINIA 11: // Add services to the container.
+LINIA 12: builder.Services.AddControllersWithViews();
+          – rejestruje usługi MVC: kontrolery + widoki Razor
+          – bez tej linii ASP.NET Core nie obsługiwałby akcji kontrolerów
+            ani widoków .cshtml
+
+LINIA 14: var app = builder.Build();
+          – buduje aplikację (WebApplication) na podstawie skonfigurowanego buildera
+          – od tej linii nie można już dodawać nowych usług do kontenera DI
+
+LINIA 16-21: // Configure the HTTP request pipeline.
+             if (!app.Environment.IsDevelopment())
+             {
+                 app.UseExceptionHandler("/Home/Error");
+                 app.UseHsts();
+             }
+          – blok tylko dla środowisk produkcyjnych (nie dla Development)
+          – UseExceptionHandler: przy nieobsłużonym wyjątku przekieruj do /Home/Error
+          – UseHsts: dodaje nagłówek HTTP Strict-Transport-Security (wymusza HTTPS)
+            przez 30 dni (domyślna wartość)
+
+LINIA 23: app.UseHttpsRedirection();
+          – middleware przekierowujące żądania HTTP na HTTPS
+          – np. http://localhost:5000 → https://localhost:5001
+
+LINIA 24: app.UseRouting();
+          – middleware aktywujące routing; dopasowuje URL do endpointów
+          – musi być przed UseAuthorization i MapControllerRoute
+
+LINIA 26: app.UseAuthorization();
+          – middleware sprawdzające uprawnienia (autoryzacja)
+          – w tym projekcie brak atrybutów [Authorize], więc nie blokuje żadnych stron
+          – zostawione jako dobra praktyka / miejsce na rozbudowę
+
+LINIA 28: app.MapStaticAssets();
+          – mapuje pliki statyczne (CSS, JS, obrazki z wwwroot/)
+          – nowsza wersja UseStaticFiles() z optymalizacją kompresji i fingerprint cache
+
+LINIA 30-33: app.MapControllerRoute(
+                 name: "default",
+                 pattern: "{controller=Home}/{action=Index}/{id?}")
+                 .WithStaticAssets();
+          – definiuje domyślną trasę (route) dla MVC
+          – pattern: {controller=Home} = jeśli brak controllera → Home
+          –          {action=Index}    = jeśli brak akcji → Index
+          –          {id?}             = opcjonalny parametr id (? = nullable)
+          – przykłady dopasowań:
+              /            → HomeController.Index()
+              /Game        → GameController.Index()
+              /Game/Edit/3 → GameController.Edit(id: 3)
+          – WithStaticAssets() = integruje obsługę plików statycznych z routingiem
+
+LINIA 35-41: // Automatyczne uruchamianie migracji przy starcie aplikacji
+             using (var scope = app.Services.CreateScope())
+             {
+                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                 db.Database.Migrate();
+             }
+          – tworzy tymczasowy zakres DI (scope) – konieczny bo DbContext jest Scoped
+          – GetRequiredService<AppDbContext>() pobiera instancję AppDbContext z kontenera
+          – db.Database.Migrate() uruchamia wszystkie niezastosowane migracje EF Core
+          – efekt: baza SQLite (gamelibrary.db) jest tworzona i aktualizowana
+            automatycznie przy każdym starcie aplikacji
+          – „using" gwarantuje zwolnienie zasobu (scope.Dispose()) po wyjściu z bloku
+
+LINIA 43: app.Run();
+          – uruchamia aplikację i blokuje wątek główny nasłuchując na żądania HTTP
+          – aplikacja działa do momentu zatrzymania (Ctrl+C lub sygnał systemowy)
