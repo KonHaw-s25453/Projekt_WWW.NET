@@ -6,9 +6,12 @@
 
 <h1>Gry</h1>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">+ Nowa gra</a>
-</p>
+@if (User.IsInRole("Admin"))
+{
+    <p>
+        <a asp-action="Create" class="btn btn-primary">+ Nowa gra</a>
+    </p>
+}
 
 <table class="table table-striped">
     <thead>
@@ -30,8 +33,11 @@
                 </td>
                 <td>
                     <a asp-action="Details" asp-route-id="@game.Id" class="btn btn-sm btn-info">Szczegóły</a>
-                    <a asp-action="Edit" asp-route-id="@game.Id" class="btn btn-sm btn-warning">Edytuj</a>
-                    <a asp-action="Delete" asp-route-id="@game.Id" class="btn btn-sm btn-danger">Usuń</a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@game.Id" class="btn btn-sm btn-warning">Edytuj</a>
+                        <a asp-action="Delete" asp-route-id="@game.Id" class="btn btn-sm btn-danger">Usuń</a>
+                    }
                 </td>
             </tr>
         }

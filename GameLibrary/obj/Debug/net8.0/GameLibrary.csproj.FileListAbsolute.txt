@@ -198,3 +198,8 @@
 /home/runner/work/Projekt_WWW.NET/Projekt_WWW.NET/GameLibrary/bin/Debug/net8.0/wwwroot/lib/jquery/dist/jquery.slim.min.js
 /home/runner/work/Projekt_WWW.NET/Projekt_WWW.NET/GameLibrary/bin/Debug/net8.0/wwwroot/lib/jquery/dist/jquery.slim.min.map
 /home/runner/work/Projekt_WWW.NET/Projekt_WWW.NET/GameLibrary/bin/Debug/net8.0/wwwroot/lib/jquery/LICENSE.txt
+/home/runner/work/Projekt_WWW.NET/Projekt_WWW.NET/GameLibrary/bin/Debug/net8.0/Microsoft.AspNetCore.Cryptography.Internal.dll
+/home/runner/work/Projekt_WWW.NET/Projekt_WWW.NET/GameLibrary/bin/Debug/net8.0/Microsoft.AspNetCore.Cryptography.KeyDerivation.dll
+/home/runner/work/Projekt_WWW.NET/Projekt_WWW.NET/GameLibrary/bin/Debug/net8.0/Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
+/home/runner/work/Projekt_WWW.NET/Projekt_WWW.NET/GameLibrary/bin/Debug/net8.0/Microsoft.Extensions.Identity.Core.dll
+/home/runner/work/Projekt_WWW.NET/Projekt_WWW.NET/GameLibrary/bin/Debug/net8.0/Microsoft.Extensions.Identity.Stores.dll

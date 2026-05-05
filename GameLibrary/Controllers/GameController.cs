@@ -1,5 +1,6 @@
 using GameLibrary.Data;
 using GameLibrary.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,6 +40,7 @@ public class GameController : Controller
     }
 
     // GET /Game/Create
+    [Authorize(Roles = "Admin")]
     public IActionResult Create()
     {
         return View();
@@ -46,6 +48,7 @@ public class GameController : Controller
 
     // POST /Game/Create
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Title,ReleaseYear")] Game game)
     {
@@ -56,6 +59,7 @@ public class GameController : Controller
     }
 
     // GET /Game/Edit/5
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(int id)
     {
         var game = await _context.Games.FindAsync(id);
@@ -65,6 +69,7 @@ public class GameController : Controller
 
     // POST /Game/Edit/5
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Title,ReleaseYear")] Game game)
     {
@@ -77,6 +82,7 @@ public class GameController : Controller
     }
 
     // GET /Game/Delete/5
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var game = await _context.Games.FindAsync(id);
@@ -86,6 +92,7 @@ public class GameController : Controller
 
     // POST /Game/Delete/5
     [HttpPost, ActionName("Delete")]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {

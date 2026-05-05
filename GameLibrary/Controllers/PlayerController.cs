@@ -1,5 +1,6 @@
 using GameLibrary.Data;
 using GameLibrary.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,6 +38,7 @@ public class PlayerController : Controller
     }
 
     // GET /Player/Create — formularz tworzenia
+    [Authorize(Roles = "Admin")]
     public IActionResult Create()
     {
         return View();
@@ -44,6 +46,7 @@ public class PlayerController : Controller
 
     // POST /Player/Create — zapis nowego gracza
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Nick,Email")] Player player)
     {
@@ -54,6 +57,7 @@ public class PlayerController : Controller
     }
 
     // GET /Player/Edit/5 — formularz edycji
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(int id)
     {
         var player = await _context.Players.FindAsync(id);
@@ -63,6 +67,7 @@ public class PlayerController : Controller
 
     // POST /Player/Edit/5 — zapis zmian
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Nick,Email")] Player player)
     {
@@ -75,6 +80,7 @@ public class PlayerController : Controller
     }
 
     // GET /Player/Delete/5 — potwierdzenie usunięcia
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var player = await _context.Players.FindAsync(id);
@@ -84,6 +90,7 @@ public class PlayerController : Controller
 
     // POST /Player/Delete/5 — faktyczne usunięcie
     [HttpPost, ActionName("Delete")]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
