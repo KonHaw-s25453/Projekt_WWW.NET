@@ -1,8 +1,70 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model GameLibrary.Models.HomeViewModel
+
+@{
+    ViewData["Title"] = "Strona główna";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="text-center mb-4">
+    <h1 class="display-4">GameLibrary</h1>
+    <p class="lead">Witaj w bibliotece gier. Przeglądaj graczy i gry lub przejdź do szczegółów.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <h2>Gracze</h2>
+        <p>
+            <a asp-controller="Player" asp-action="Create" class="btn btn-primary btn-sm">+ Nowy gracz</a>
+            <a asp-controller="Player" asp-action="Index" class="btn btn-outline-secondary btn-sm">Zobacz wszystkich</a>
+        </p>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nick</th>
+                    <th>Email</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var player in Model.Players)
+                {
+                    <tr>
+                        <td>@player.Nick</td>
+                        <td>@player.Email</td>
+                        <td>
+                            <a asp-controller="Player" asp-action="Details" asp-route-id="@player.Id" class="btn btn-sm btn-info">Szczegóły</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-md-6">
+        <h2>Gry</h2>
+        <p>
+            <a asp-controller="Game" asp-action="Create" class="btn btn-primary btn-sm">+ Nowa gra</a>
+            <a asp-controller="Game" asp-action="Index" class="btn btn-outline-secondary btn-sm">Zobacz wszystkie</a>
+        </p>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Tytuł</th>
+                    <th>Rok wydania</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var game in Model.Games)
+                {
+                    <tr>
+                        <td>@game.Title</td>
+                        <td>@game.ReleaseYear</td>
+                        <td>
+                            <a asp-controller="Game" asp-action="Details" asp-route-id="@game.Id" class="btn btn-sm btn-info">Szczegóły</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
