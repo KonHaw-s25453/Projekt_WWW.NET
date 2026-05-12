@@ -35,7 +35,7 @@ Aplikacja webowa ASP.NET Core MVC do zarządzania biblioteką gier.
 ```bash
 cd GameLibrary
 dotnet restore
-dotnet build GameLibrary.sln --nologo
+dotnet build GameLibrary.sln
 dotnet run --project GameLibrary.csproj
 ```
 

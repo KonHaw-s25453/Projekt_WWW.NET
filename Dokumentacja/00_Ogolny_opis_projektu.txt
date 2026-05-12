@@ -23,7 +23,7 @@ GŁÓWNE ENCJE
 3. Tag         – tag/kategoria (Id, Name)
 4. PlayerGame  – tabela pośrednia Player ↔ Game (PlayerId, GameId, HoursPlayed)
 5. Friend      – tabela pośrednia Player ↔ Player (PlayerId, FriendId)
-6. GameTags    – tabela pośrednia Game ↔ Tag tworzona przez konfigurację EF Core
+6. GameTag     – relacja Game ↔ Tag zapisywana w tabeli GameTags konfigurowanej przez EF Core
 
 RELACJE M:N
 -----------
@@ -50,7 +50,7 @@ Podczas migracji dodawane są przykładowe rekordy:
 URUCHOMIENIE
 ------------
 1. Przejdź do katalogu GameLibrary
-2. Wykonaj: dotnet build GameLibrary.sln --nologo
+2. Wykonaj: dotnet build GameLibrary.sln
 3. Uruchom: dotnet run --project GameLibrary.csproj
 
 Przy starcie aplikacji wywoływane jest db.Database.Migrate(), więc baza danych
