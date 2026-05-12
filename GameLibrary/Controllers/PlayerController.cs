@@ -94,7 +94,7 @@ public class PlayerController : Controller
                 .Where(f => f.PlayerId == id || f.FriendId == id)
                 .ToListAsync();
 
-            if (playerFriends.Count != 0)
+            if (playerFriends.Any())
             {
                 _context.Friends.RemoveRange(playerFriends);
             }

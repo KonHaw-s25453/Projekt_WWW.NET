@@ -57,7 +57,7 @@ public class GameController : Controller
         }
 
         var selectedTagIds = selectedTags?.Distinct().ToArray() ?? Array.Empty<int>();
-        if (selectedTagIds.Length != 0)
+        if (selectedTagIds.Any())
         {
             game.Tags = await _context.Tags
                 .Where(t => selectedTagIds.Contains(t.Id))
