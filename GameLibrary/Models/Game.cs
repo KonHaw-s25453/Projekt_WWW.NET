@@ -9,6 +9,6 @@ public class Game
     // Relacja M:N z Player (przez tabelę pośrednią PlayerGame)
     public ICollection<PlayerGame> PlayerGames { get; set; } = new List<PlayerGame>();
 
-    // Relacja M:N z Tag (przez tabelę pośrednią GameTag)
-    public ICollection<GameTag> GameTags { get; set; } = new List<GameTag>();
+    // Relacja M:N z Tag z ukrytą tabelą pośrednią
+    public ICollection<Tag> Tags { get; set; } = new List<Tag>();
 }

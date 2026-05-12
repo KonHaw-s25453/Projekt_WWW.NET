@@ -10,12 +10,12 @@
 <hr />
 
 <h3>🏷 Tagi</h3>
-@if (Model.GameTags.Any())
+@if (Model.Tags.Any())
 {
-    @foreach (var gt in Model.GameTags)
+    @foreach (var tag in Model.Tags)
     {
-        <a asp-controller="Tag" asp-action="Details" asp-route-id="@gt.Tag.Id"
-           class="badge bg-primary text-decoration-none me-1">@gt.Tag.Name</a>
+        <a asp-controller="Tag" asp-action="Details" asp-route-id="@tag.Id"
+           class="badge bg-primary text-decoration-none me-1">@tag.Name</a>
     }
 }
 else

@@ -9,14 +9,14 @@
 <hr />
 
 <h3>🎮 Gry w tej kategorii</h3>
-@if (Model.GameTags.Any())
+@if (Model.Games.Any())
 {
     <ul class="list-group">
-        @foreach (var gt in Model.GameTags)
+        @foreach (var game in Model.Games)
         {
             <li class="list-group-item">
-                <a asp-controller="Game" asp-action="Details" asp-route-id="@gt.Game.Id">
-                    @gt.Game.Title (@gt.Game.ReleaseYear)
+                <a asp-controller="Game" asp-action="Details" asp-route-id="@game.Id">
+                    @game.Title (@game.ReleaseYear)
                 </a>
             </li>
         }

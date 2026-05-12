@@ -12,7 +12,6 @@ public class AppDbContext : DbContext
     public DbSet<Game> Games { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<PlayerGame> PlayerGames { get; set; }
-    public DbSet<GameTag> GameTags { get; set; }
     public DbSet<Friend> Friends { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -31,19 +30,32 @@ public class AppDbContext : DbContext
             .WithMany(g => g.PlayerGames)
             .HasForeignKey(pg => pg.GameId);
 
-        // Klucz złożony tabeli pośredniej GameTag (GameId + TagId)
-        modelBuilder.Entity<GameTag>()
-            .HasKey(gt => new { gt.GameId, gt.TagId });
-
-        modelBuilder.Entity<GameTag>()
-            .HasOne(gt => gt.Game)
-            .WithMany(g => g.GameTags)
-            .HasForeignKey(gt => gt.GameId);
-
-        modelBuilder.Entity<GameTag>()
-            .HasOne(gt => gt.Tag)
-            .WithMany(t => t.GameTags)
-            .HasForeignKey(gt => gt.TagId);
+        // Relacja M:N Game <-> Tag z ukrytą tabelą pośrednią
+        modelBuilder.Entity<Game>()
+            .HasMany(g => g.Tags)
+            .WithMany(t => t.Games)
+            .UsingEntity<Dictionary<string, object>>(
+                "GameTag",
+                right => right
+                    .HasOne<Tag>()
+                    .WithMany()
+                    .HasForeignKey("TagId"),
+                left => left
+                    .HasOne<Game>()
+                    .WithMany()
+                    .HasForeignKey("GameId"),
+                join =>
+                {
+                    join.ToTable("GameTags");
+                    join.HasKey("GameId", "TagId");
+                    join.HasData(
+                        new { GameId = 1, TagId = 1 },
+                        new { GameId = 1, TagId = 4 },
+                        new { GameId = 2, TagId = 3 },
+                        new { GameId = 3, TagId = 1 },
+                        new { GameId = 3, TagId = 4 }
+                    );
+                });
 
         // Klucz złożony tabeli Friend (PlayerId + FriendId) - self-referencing
         modelBuilder.Entity<Friend>()
@@ -84,14 +96,6 @@ public class AppDbContext : DbContext
             new PlayerGame { PlayerId = 1, GameId = 1, HoursPlayed = 120 },
             new PlayerGame { PlayerId = 1, GameId = 2, HoursPlayed = 50 },
             new PlayerGame { PlayerId = 2, GameId = 1, HoursPlayed = 80 }
-        );
-
-        modelBuilder.Entity<GameTag>().HasData(
-            new GameTag { GameId = 1, TagId = 1 },  // Wiedźmin 3 - RPG
-            new GameTag { GameId = 1, TagId = 4 },  // Wiedźmin 3 - OpenWorld
-            new GameTag { GameId = 2, TagId = 3 },  // Minecraft - Indie
-            new GameTag { GameId = 3, TagId = 1 },  // Cyberpunk - RPG
-            new GameTag { GameId = 3, TagId = 4 }   // Cyberpunk - OpenWorld
         );
 
         modelBuilder.Entity<Friend>().HasData(

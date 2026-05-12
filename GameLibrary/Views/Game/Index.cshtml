@@ -26,7 +26,7 @@
                 <td>@game.Title</td>
                 <td>@game.ReleaseYear</td>
                 <td>
-                    @string.Join(", ", game.GameTags.Select(gt => gt.Tag.Name))
+                    @string.Join(", ", game.Tags.Select(tag => tag.Name))
                 </td>
                 <td>
                     <a asp-action="Details" asp-route-id="@game.Id" class="btn btn-sm btn-info">Szczegóły</a>
