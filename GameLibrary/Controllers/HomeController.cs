@@ -21,8 +21,7 @@ public class HomeController : Controller
         {
             Players = await _context.Players.ToListAsync(),
             Games = await _context.Games
-                .Include(g => g.GameTags)
-                    .ThenInclude(gt => gt.Tag)
+                .Include(g => g.Tags)
                 .ToListAsync()
         };
         return View(viewModel);

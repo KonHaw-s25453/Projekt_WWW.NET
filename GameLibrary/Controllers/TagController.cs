@@ -25,8 +25,7 @@ public class TagController : Controller
     public async Task<IActionResult> Details(int id)
     {
         var tag = await _context.Tags
-            .Include(t => t.GameTags)
-                .ThenInclude(gt => gt.Game)
+            .Include(t => t.Games)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (tag == null) return NotFound();

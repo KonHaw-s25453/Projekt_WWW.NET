@@ -2,11 +2,13 @@
 
 @{
     ViewData["Title"] = "Nowa gra";
+    var allTags = ViewBag.AllTags as List<GameLibrary.Models.Tag>;
+    var selectedTagIds = ViewBag.SelectedTagIds as IEnumerable<int> ?? Array.Empty<int>();
 }
 
 <h1>Nowa gra</h1>
 
-<form asp-action="Create">
+<form asp-action="Create" method="post">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <div class="mb-3">
@@ -19,6 +21,21 @@
         <label asp-for="ReleaseYear" class="form-label">Rok wydania</label>
         <input asp-for="ReleaseYear" class="form-control" type="number" />
         <span asp-validation-for="ReleaseYear" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Tagi</label><br />
+        @if (allTags != null)
+        {
+            foreach (var tag in allTags)
+            {
+                <label class="form-check-label me-2">
+                    <input type="checkbox" name="selectedTags" value="@tag.Id"
+                           @(selectedTagIds.Contains(tag.Id) ? "checked" : "") class="form-check-input" />
+                    @tag.Name
+                </label>
+            }
+        }
     </div>
 
     <button type="submit" class="btn btn-primary">Zapisz</button>

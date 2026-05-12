@@ -4,7 +4,7 @@
 @{
     ViewData["Title"] = "Edytuj grę";
     var allTags = ViewBag.AllTags as List<GameLibrary.Models.Tag>;
-    var selectedTagIds = ViewBag.SelectedTagIds as List<int> ?? new List<int>();
+    var selectedTagIds = ViewBag.SelectedTagIds as IEnumerable<int> ?? Array.Empty<int>();
 }
 
 <h1>Edytuj grę</h1>

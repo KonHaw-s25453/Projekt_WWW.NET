@@ -26,7 +26,7 @@ public class PlayerController : Controller
     public async Task<IActionResult> Details(int id)
     {
         var player = await _context.Players
-            .Include(p => p.Games)
+            .Include(p => p.PlayerGames)
                 .ThenInclude(pg => pg.Game)
             .Include(p => p.Friends)
                 .ThenInclude(f => f.FriendPlayer)
@@ -90,6 +90,15 @@ public class PlayerController : Controller
         var player = await _context.Players.FindAsync(id);
         if (player != null)
         {
+            var playerFriends = await _context.Friends
+                .Where(f => f.PlayerId == id || f.FriendId == id)
+                .ToListAsync();
+
+            if (playerFriends.Any())
+            {
+                _context.Friends.RemoveRange(playerFriends);
+            }
+
             _context.Players.Remove(player);
             await _context.SaveChangesAsync();
         }
