@@ -28,7 +28,7 @@ GŁÓWNE ENCJE
 RELACJE M:N
 -----------
 1. Player ↔ Game (przez PlayerGame)
-2. Game ↔ Tag (przez klasę łączącą GameTag i tabelę GameTags konfigurowaną w AppDbContext)
+2. Game ↔ Tag (przez tabelę GameTags konfigurowaną w AppDbContext)
 3. Player ↔ Player (przez Friend, relacja self-referencing)
 
 FUNKCJONALNOŚCI
