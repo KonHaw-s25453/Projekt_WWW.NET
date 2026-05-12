@@ -71,7 +71,6 @@ public class GameController : Controller
         if (id != game.Id) return NotFound();
         if (!ModelState.IsValid) return View(game);
 
-        _context.Update(game);
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
