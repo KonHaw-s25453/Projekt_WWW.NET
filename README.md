@@ -33,7 +33,7 @@ Aplikacja webowa ASP.NET Core MVC do zarządzania biblioteką gier.
 ## Uruchomienie lokalne
 
 ```bash
-cd /home/runner/work/Projekt_WWW.NET/Projekt_WWW.NET/GameLibrary
+cd GameLibrary
 dotnet restore
 dotnet build GameLibrary.sln --nologo
 dotnet run --project GameLibrary.csproj
