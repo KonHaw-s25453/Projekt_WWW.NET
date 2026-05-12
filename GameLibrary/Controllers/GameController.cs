@@ -28,7 +28,8 @@ public class GameController : Controller
     public async Task<IActionResult> Details(int id)
     {
         var game = await _context.Games
-            .Include(g => g.Players) // Zmieniono z PlayerGames na Players
+            .Include(g => g.PlayerGames)
+                .ThenInclude(pg => pg.Player)
             .Include(g => g.GameTags)
                 .ThenInclude(gt => gt.Tag)
             .FirstOrDefaultAsync(g => g.Id == id);
