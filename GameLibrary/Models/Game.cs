@@ -7,7 +7,7 @@ public class Game
     public int ReleaseYear { get; set; }
 
     // Relacja M:N z Player (przez tabelę pośrednią PlayerGame)
-    public ICollection<PlayerGame> PlayerGames { get; set; } = new List<PlayerGame>();
+    public ICollection<Player> Players { get; set; } = new List<Player>();
 
     // Relacja M:N z Tag (przez tabelę pośrednią GameTag)
     public ICollection<GameTag> GameTags { get; set; } = new List<GameTag>();

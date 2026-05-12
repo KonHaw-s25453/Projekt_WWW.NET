@@ -26,7 +26,7 @@ public class PlayerController : Controller
     public async Task<IActionResult> Details(int id)
     {
         var player = await _context.Players
-            .Include(p => p.PlayerGames)
+            .Include(p => p.Games)
                 .ThenInclude(pg => pg.Game)
             .Include(p => p.Friends)
                 .ThenInclude(f => f.FriendPlayer)

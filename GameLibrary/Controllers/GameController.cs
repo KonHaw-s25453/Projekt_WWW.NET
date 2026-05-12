@@ -28,8 +28,7 @@ public class GameController : Controller
     public async Task<IActionResult> Details(int id)
     {
         var game = await _context.Games
-            .Include(g => g.PlayerGames)
-                .ThenInclude(pg => pg.Player)
+            .Include(g => g.Players) // Zmieniono z PlayerGames na Players
             .Include(g => g.GameTags)
                 .ThenInclude(gt => gt.Tag)
             .FirstOrDefaultAsync(g => g.Id == id);
@@ -58,18 +57,46 @@ public class GameController : Controller
     // GET /Game/Edit/5
     public async Task<IActionResult> Edit(int id)
     {
-        var game = await _context.Games.FindAsync(id);
+        var game = await _context.Games
+            .Include(g => g.GameTags)
+            .FirstOrDefaultAsync(g => g.Id == id);
         if (game == null) return NotFound();
+
+        ViewBag.AllTags = await _context.Tags.ToListAsync();
+        ViewBag.SelectedTagIds = game.GameTags.Select(gt => gt.TagId).ToList();
+
         return View(game);
     }
 
     // POST /Game/Edit/5
+    // C#
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Title,ReleaseYear")] Game game)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Title,ReleaseYear")] Game game, int[] selectedTags)
     {
         if (id != game.Id) return NotFound();
-        if (!ModelState.IsValid) return View(game);
+        if (!ModelState.IsValid)
+        {
+            ViewBag.AllTags = await _context.Tags.ToListAsync();
+            ViewBag.SelectedTagIds = selectedTags;
+            return View(game);
+        }
+
+        var gameToUpdate = await _context.Games
+            .Include(g => g.GameTags)
+            .FirstOrDefaultAsync(g => g.Id == id);
+
+        if (gameToUpdate == null) return NotFound();
+
+        gameToUpdate.Title = game.Title;
+        gameToUpdate.ReleaseYear = game.ReleaseYear;
+
+        // Aktualizacja tagów
+        gameToUpdate.GameTags.Clear();
+        foreach (var tagId in selectedTags)
+        {
+            gameToUpdate.GameTags.Add(new GameTag { GameId = id, TagId = tagId });
+        }
 
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
